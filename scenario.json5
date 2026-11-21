@@ -1,0 +1,66 @@
+{
+  manifest_version: "0.1.0",
+
+  // リポジトリの Secrets（GOOGLE_API_KEY）がここに入る
+  config_schema: {
+    type: "object",
+    properties: {
+      google_api_key: { type: "string", secret: true },
+    },
+    required: ["google_api_key"],
+    additionalProperties: false,
+  },
+
+  components: {
+    // 評価の進行役（AgentBeats公式のゲートウェイ）
+    gateway: {
+      manifest: "https://raw.githubusercontent.com/RDI-Foundation/agentbeats-gateway/refs/tags/v0.3/amber-manifest.json5",
+      config: {
+        assessment_config: {
+          topic: "Should artificial intelligence be regulated?",
+          num_rounds: 2,
+        },
+        participant_roles: {
+          green:   "debate_judge",
+          purple1: "pro_debater",
+          purple2: "con_debater",
+        },
+      },
+    },
+
+    // Green Agent（審判）
+    debate_judge: {
+      manifest: "https://raw.githubusercontent.com/satoasu-666-12012/agentbeats-tutorial/refs/tags/v1.0.1/scenarios/debate/judge-manifest.json5",
+      config: { google_api_key: "${config.google_api_key}" },
+    },
+
+    // Purple Agent（賛成側）
+    pro_debater: {
+      manifest: "https://raw.githubusercontent.com/satoasu-666-12012/agentbeats-tutorial/refs/tags/v1.0.1/scenarios/debate/debater-manifest.json5",
+      config: { google_api_key: "${config.google_api_key}" },
+    },
+
+    // Purple Agent（反対側）
+    con_debater: {
+      manifest: "https://raw.githubusercontent.com/satoasu-666-12012/agentbeats-tutorial/refs/tags/v1.0.1/scenarios/debate/debater-manifest.json5",
+      config: { google_api_key: "${config.google_api_key}" },
+    },
+  },
+
+  bindings: [
+    { to: "#gateway.green",   from: "#debate_judge.a2a" },
+    { to: "#gateway.purple1", from: "#pro_debater.a2a" },
+    { to: "#gateway.purple2", from: "#con_debater.a2a" },
+    { to: "#debate_judge.proxy", from: "#gateway.proxy", weak: true },
+  ],
+
+  exports: { results: "#gateway.results" },
+
+  metadata: {
+    agentbeats_ids: {
+      debate_judge: "01a1fcbd-1606-7f80-9486-7b7c09745368",
+      pro_debater:  "01a1fcbd-be22-7091-93db-50ccb29039de",
+      con_debater:  "01a1fcbd-be22-7091-93db-50ccb29039de",
+    },
+  },
+}
